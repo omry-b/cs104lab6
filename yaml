@@ -1,0 +1,40 @@
+name: Build Calculator
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ make libmagick++-dev
+
+    - name: Build dynamic
+      run: |
+        make calculator_dynamic
+        
+    - name: Build static
+      run: |
+        make calculator_static
+        
+    - name: Verify linking
+      run: |
+        ldd calculator_dynamic
+        ! ldd calculator_static 2>&1 | grep -q "dynamically linked"
+        
+    - name: Test compilation cleanup
+      run: |
+        make clean
+        if [ -f calculator_dynamic ] || [ -f calculator_static ]; then
+          echo "Clean failed - executables still exist"
+          exit 1
+        fi
